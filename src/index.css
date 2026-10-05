@@ -1,0 +1,100 @@
+@import "tailwindcss";
+
+@layer base {
+  :root {
+    --font-serif: 'Cormorant Garamond', Georgia, serif;
+    --font-sans: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+    --font-handwriting: 'Caveat', cursive;
+    --font-mono: 'JetBrains Mono', monospace;
+
+    /* Cheerful Baby Pink & Whipped Cream Light Theme */
+    --color-bg-deep: #fff5f7;
+    --color-bg-surface: #fff0f3;
+    --color-bg-elevated: #ffffff;
+    --color-border-subtle: rgba(244, 114, 182, 0.25);
+    --color-border-warm: rgba(251, 113, 133, 0.35);
+    --color-pink-glow: #ec4899;
+    --color-pink-soft: #fbcfe8;
+    --color-cream-light: #ffffff;
+    --color-cream-paper: #fffcf8;
+    --color-paper-ink: #3b1424;
+  }
+
+  body {
+    font-family: var(--font-sans);
+    background-color: #fff5f7;
+    color: #4a1528;
+    text-rendering: optimizeLegibility;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+  }
+
+  h1, h2, h3, .font-display {
+    font-family: var(--font-serif);
+    color: #3b0d1e;
+    text-wrap: balance;
+  }
+
+  .font-handwriting {
+    font-family: var(--font-handwriting);
+  }
+
+  .font-sans-body {
+    font-family: var(--font-sans);
+  }
+
+  .font-code {
+    font-family: var(--font-mono);
+  }
+}
+
+/* Custom cheerful baby pink & cream light utility classes */
+.cheerful-vignette {
+  box-shadow: inset 0 0 80px rgba(244, 114, 182, 0.08);
+}
+
+.scrapbook-shadow {
+  box-shadow: 0 14px 35px -8px rgba(219, 39, 119, 0.12), 0 3px 10px rgba(244, 114, 182, 0.1);
+}
+
+.pink-glow {
+  text-shadow: 0 0 20px rgba(236, 72, 153, 0.35);
+}
+
+.pink-glow-box {
+  box-shadow: 0 0 30px rgba(244, 114, 182, 0.25);
+}
+
+.cream-card {
+  background-color: #ffffff;
+  color: #3b1424;
+  box-shadow: 0 10px 30px rgba(244, 114, 182, 0.08);
+}
+
+.subtle-noise {
+  background-image: radial-gradient(rgba(244, 114, 182, 0.12) 1px, transparent 0);
+  background-size: 24px 24px;
+}
+
+/* Lenis Recommended CSS */
+html.lenis, html.lenis body {
+  height: auto;
+}
+
+.lenis.lenis-smooth {
+  scroll-behavior: auto !important;
+}
+
+.lenis.lenis-stopped {
+  overflow: hidden;
+}
+
+/* Reduced motion support */
+@media (prefers-reduced-motion: reduce) {
+  *, ::before, ::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}
