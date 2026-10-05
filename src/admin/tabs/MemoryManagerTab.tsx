@@ -1,6 +1,6 @@
 import React from 'react';
 import { SiteDataSchema, MemoryItem } from '../../types';
-import { Plus, Trash2, Image, MapPin, Calendar } from 'lucide-react';
+import { Plus, Trash2 } from 'lucide-react';
 import { Button } from '../../components/ui/Button';
 
 interface MemoryManagerTabProps {
@@ -40,13 +40,13 @@ export const MemoryManagerTab: React.FC<MemoryManagerTabProps> = ({ content, onC
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <div>
-          <h3 className="text-base font-serif text-white">Memory Timeline Chapters</h3>
-          <p className="text-xs text-neutral-400">
+          <h3 className="text-base font-serif text-[#3b0d1e] font-bold">Memory Timeline Chapters</h3>
+          <p className="text-xs text-rose-800/80">
             Organize chronological milestones, locations, and photo cards.
           </p>
         </div>
         <Button
-          variant="secondary"
+          variant="primary"
           size="sm"
           icon={<Plus className="w-3.5 h-3.5" />}
           onClick={handleAddMemory}
@@ -59,13 +59,13 @@ export const MemoryManagerTab: React.FC<MemoryManagerTabProps> = ({ content, onC
         {memories.map((mem, idx) => (
           <div
             key={mem.id}
-            className="p-6 rounded-2xl bg-neutral-900/70 border border-white/10 space-y-5"
+            className="p-6 rounded-2xl bg-white border border-pink-200 shadow-sm space-y-5"
           >
-            <div className="flex items-center justify-between border-b border-white/5 pb-3">
-              <span className="text-xs font-mono text-amber-300">Milestone #{idx + 1}</span>
+            <div className="flex items-center justify-between border-b border-pink-100 pb-3">
+              <span className="text-xs font-mono text-pink-700 font-bold">Milestone #{idx + 1}</span>
               <button
                 onClick={() => handleDeleteMemory(idx)}
-                className="text-neutral-500 hover:text-rose-400 transition-colors p-1 cursor-pointer"
+                className="text-rose-400 hover:text-rose-600 transition-colors p-1 cursor-pointer"
                 title="Delete memory"
               >
                 <Trash2 className="w-4 h-4" />
@@ -75,7 +75,7 @@ export const MemoryManagerTab: React.FC<MemoryManagerTabProps> = ({ content, onC
             <div className="grid grid-cols-1 md:grid-cols-12 gap-5">
               {/* Photo Preview & Path */}
               <div className="md:col-span-4 space-y-2">
-                <div className="aspect-4/3 rounded-xl overflow-hidden bg-neutral-950 border border-white/10">
+                <div className="aspect-4/3 rounded-xl overflow-hidden bg-pink-50 border border-pink-200">
                   <img
                     src={mem.imageUrl}
                     alt={mem.title}
@@ -83,14 +83,14 @@ export const MemoryManagerTab: React.FC<MemoryManagerTabProps> = ({ content, onC
                   />
                 </div>
                 <div className="space-y-1">
-                  <label className="text-[11px] font-mono text-neutral-400">Image Asset URL</label>
+                  <label className="text-[11px] font-mono text-rose-800 font-semibold">Image Asset URL</label>
                   <input
                     type="text"
                     value={mem.imageUrl}
                     onChange={(e) =>
                       handleUpdateMemory(idx, { ...mem, imageUrl: e.target.value })
                     }
-                    className="w-full px-2.5 py-1.5 rounded-lg bg-neutral-950 border border-white/10 text-white text-xs outline-none focus:border-amber-400/50"
+                    className="w-full px-2.5 py-1.5 rounded-lg bg-pink-50/50 border border-pink-200 text-[#3b0d1e] text-xs outline-none focus:border-pink-500"
                   />
                 </div>
               </div>
@@ -98,64 +98,64 @@ export const MemoryManagerTab: React.FC<MemoryManagerTabProps> = ({ content, onC
               {/* Memory Details Form */}
               <div className="md:col-span-8 space-y-4">
                 <div className="space-y-1.5">
-                  <label className="text-xs font-mono text-neutral-400">Milestone Title</label>
+                  <label className="text-xs font-mono text-rose-800 font-semibold">Milestone Title</label>
                   <input
                     type="text"
                     value={mem.title}
                     onChange={(e) =>
                       handleUpdateMemory(idx, { ...mem, title: e.target.value })
                     }
-                    className="w-full px-3 py-2 rounded-xl bg-neutral-950 border border-white/10 text-white text-sm outline-none focus:border-amber-400/50"
+                    className="w-full px-3 py-2 rounded-xl bg-pink-50/50 border border-pink-200 text-[#3b0d1e] text-sm outline-none focus:border-pink-500"
                   />
                 </div>
 
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                   <div className="space-y-1.5">
-                    <label className="text-xs font-mono text-neutral-400">Date / Season</label>
+                    <label className="text-xs font-mono text-rose-800 font-semibold">Date / Season</label>
                     <input
                       type="text"
                       value={mem.date}
                       onChange={(e) =>
                         handleUpdateMemory(idx, { ...mem, date: e.target.value })
                       }
-                      className="w-full px-3 py-2 rounded-xl bg-neutral-950 border border-white/10 text-white text-xs outline-none focus:border-amber-400/50"
+                      className="w-full px-3 py-2 rounded-xl bg-pink-50/50 border border-pink-200 text-[#3b0d1e] text-xs outline-none focus:border-pink-500"
                     />
                   </div>
 
                   <div className="space-y-1.5">
-                    <label className="text-xs font-mono text-neutral-400">Location Tag</label>
+                    <label className="text-xs font-mono text-rose-800 font-semibold">Location Tag</label>
                     <input
                       type="text"
                       value={mem.location}
                       onChange={(e) =>
                         handleUpdateMemory(idx, { ...mem, location: e.target.value })
                       }
-                      className="w-full px-3 py-2 rounded-xl bg-neutral-950 border border-white/10 text-white text-xs outline-none focus:border-amber-400/50"
+                      className="w-full px-3 py-2 rounded-xl bg-pink-50/50 border border-pink-200 text-[#3b0d1e] text-xs outline-none focus:border-pink-500"
                     />
                   </div>
                 </div>
 
                 <div className="space-y-1.5">
-                  <label className="text-xs font-mono text-neutral-400">Story Description</label>
+                  <label className="text-xs font-mono text-rose-800 font-semibold">Story Description</label>
                   <textarea
                     rows={2}
                     value={mem.description}
                     onChange={(e) =>
                       handleUpdateMemory(idx, { ...mem, description: e.target.value })
                     }
-                    className="w-full px-3 py-2 rounded-xl bg-neutral-950 border border-white/10 text-white text-xs outline-none focus:border-amber-400/50"
+                    className="w-full px-3 py-2 rounded-xl bg-pink-50/50 border border-pink-200 text-[#3b0d1e] text-xs outline-none focus:border-pink-500"
                   />
                 </div>
 
                 <div className="space-y-1.5">
-                  <label className="text-xs font-mono text-neutral-400">Handwritten Polaroid Caption</label>
+                  <label className="text-xs font-mono text-rose-800 font-semibold">Handwritten Polaroid Caption</label>
                   <input
                     type="text"
                     value={mem.captionNote}
                     onChange={(e) =>
                       handleUpdateMemory(idx, { ...mem, captionNote: e.target.value })
                     }
-                    className="w-full px-3 py-2 rounded-xl bg-neutral-950 border border-white/10 text-amber-200 text-xs font-handwriting outline-none focus:border-amber-400/50"
+                    className="w-full px-3 py-2 rounded-xl bg-pink-50/50 border border-pink-200 text-rose-950 text-xs font-handwriting outline-none focus:border-pink-500 text-base"
                   />
                 </div>
               </div>

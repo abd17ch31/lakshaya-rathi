@@ -55,11 +55,11 @@ export const PrivateInboxTab: React.FC = () => {
       {/* Header & Refresh */}
       <div className="flex items-center justify-between">
         <div>
-          <div className="flex items-center gap-2 text-xs font-mono text-emerald-400">
+          <div className="flex items-center gap-2 text-xs font-mono text-emerald-700 font-bold">
             <Lock className="w-3.5 h-3.5" />
             <span>Private & Encrypted Vault</span>
           </div>
-          <h3 className="text-base font-serif text-white">Responses & Submissions from Boyfriend</h3>
+          <h3 className="text-base font-serif text-[#3b0d1e] font-bold">Responses & Submissions from Boyfriend</h3>
         </div>
         <Button
           variant="secondary"
@@ -73,40 +73,40 @@ export const PrivateInboxTab: React.FC = () => {
 
       {/* STATS TILES */}
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-        <div className="p-5 rounded-2xl bg-neutral-900/60 border border-white/10 space-y-1">
-          <div className="flex items-center gap-2 text-xs text-amber-300 font-mono">
-            <Mail className="w-4 h-4" />
+        <div className="p-5 rounded-2xl bg-white border border-pink-200 shadow-sm space-y-1">
+          <div className="flex items-center gap-2 text-xs text-pink-700 font-mono font-bold">
+            <Mail className="w-4 h-4 text-pink-500" />
             <span>Wishes Received</span>
           </div>
-          <div className="text-2xl font-serif text-white">{wishes.length}</div>
+          <div className="text-2xl font-serif text-[#3b0d1e] font-bold">{wishes.length}</div>
         </div>
 
-        <div className="p-5 rounded-2xl bg-neutral-900/60 border border-white/10 space-y-1">
-          <div className="flex items-center gap-2 text-xs text-rose-300 font-mono">
-            <Mic className="w-4 h-4" />
+        <div className="p-5 rounded-2xl bg-white border border-pink-200 shadow-sm space-y-1">
+          <div className="flex items-center gap-2 text-xs text-rose-700 font-mono font-bold">
+            <Mic className="w-4 h-4 text-rose-500" />
             <span>Voice Notes</span>
           </div>
-          <div className="text-2xl font-serif text-white">{voiceNotes.length}</div>
+          <div className="text-2xl font-serif text-[#3b0d1e] font-bold">{voiceNotes.length}</div>
         </div>
 
-        <div className="p-5 rounded-2xl bg-neutral-900/60 border border-white/10 space-y-1">
-          <div className="flex items-center gap-2 text-xs text-amber-200 font-mono">
-            <Star className="w-4 h-4" />
+        <div className="p-5 rounded-2xl bg-white border border-pink-200 shadow-sm space-y-1">
+          <div className="flex items-center gap-2 text-xs text-amber-700 font-mono font-bold">
+            <Star className="w-4 h-4 text-amber-500" />
             <span>Permanent Stars in Sky</span>
           </div>
-          <div className="text-2xl font-serif text-white">{stars.length}</div>
+          <div className="text-2xl font-serif text-[#3b0d1e] font-bold">{stars.length}</div>
         </div>
       </div>
 
       {/* 1. BOYFRIEND'S WRITTEN WISHES */}
-      <div className="p-6 rounded-2xl bg-neutral-900/60 border border-white/10 space-y-4">
-        <div className="flex items-center gap-2 text-sm font-serif text-amber-300 border-b border-white/5 pb-3">
-          <Mail className="w-4 h-4" />
+      <div className="p-6 rounded-2xl bg-white border border-pink-200 shadow-sm space-y-4">
+        <div className="flex items-center gap-2 text-sm font-serif text-pink-700 font-bold border-b border-pink-100 pb-3">
+          <Mail className="w-4 h-4 text-pink-500" />
           <span>Written Wishes ({wishes.length})</span>
         </div>
 
         {wishes.length === 0 ? (
-          <p className="text-xs text-neutral-500 italic py-4 text-center font-mono">
+          <p className="text-xs text-rose-700/70 italic py-4 text-center font-mono">
             No wishes submitted yet. When he writes a wish, it will appear here in full.
           </p>
         ) : (
@@ -114,13 +114,13 @@ export const PrivateInboxTab: React.FC = () => {
             {wishes.map((w) => (
               <div
                 key={w.id}
-                className="p-4 rounded-xl bg-neutral-950 border border-white/5 space-y-2"
+                className="p-4 rounded-xl bg-pink-50/50 border border-pink-200 space-y-2"
               >
-                <div className="flex items-center justify-between text-[11px] font-mono text-neutral-400">
+                <div className="flex items-center justify-between text-[11px] font-mono text-rose-700 font-medium">
                   <span>{new Date(w.createdAt).toLocaleString()}</span>
-                  <span className="text-amber-300/80">Permanent Star Created</span>
+                  <span className="text-pink-600 font-bold">Permanent Star Created</span>
                 </div>
-                <p className="text-lg text-amber-100 font-handwriting leading-snug">
+                <p className="text-lg text-rose-950 font-handwriting leading-snug">
                   “{w.wishText}”
                 </p>
               </div>
@@ -130,14 +130,14 @@ export const PrivateInboxTab: React.FC = () => {
       </div>
 
       {/* 2. BOYFRIEND'S RECORDED VOICE NOTES */}
-      <div className="p-6 rounded-2xl bg-neutral-900/60 border border-white/10 space-y-4">
-        <div className="flex items-center gap-2 text-sm font-serif text-rose-300 border-b border-white/5 pb-3">
-          <Mic className="w-4 h-4" />
+      <div className="p-6 rounded-2xl bg-white border border-pink-200 shadow-sm space-y-4">
+        <div className="flex items-center gap-2 text-sm font-serif text-rose-700 font-bold border-b border-pink-100 pb-3">
+          <Mic className="w-4 h-4 text-rose-500" />
           <span>Boyfriend Voice Recordings ({voiceNotes.length})</span>
         </div>
 
         {voiceNotes.length === 0 ? (
-          <p className="text-xs text-neutral-500 italic py-4 text-center font-mono">
+          <p className="text-xs text-rose-700/70 italic py-4 text-center font-mono">
             No voice recordings received yet.
           </p>
         ) : (
@@ -145,13 +145,13 @@ export const PrivateInboxTab: React.FC = () => {
             {voiceNotes.map((v) => (
               <div
                 key={v.id}
-                className="p-4 rounded-xl bg-neutral-950 border border-white/5 flex items-center justify-between gap-4"
+                className="p-4 rounded-xl bg-pink-50/50 border border-pink-200 flex items-center justify-between gap-4"
               >
                 <div className="space-y-1">
-                  <div className="text-xs text-white font-mono">
+                  <div className="text-xs text-[#3b0d1e] font-mono font-bold">
                     Voice Note ({formatTime(v.durationSeconds)})
                   </div>
-                  <div className="text-[11px] text-neutral-500 font-mono">
+                  <div className="text-[11px] text-rose-700/70 font-mono">
                     {new Date(v.createdAt).toLocaleString()}
                   </div>
                 </div>
@@ -160,7 +160,7 @@ export const PrivateInboxTab: React.FC = () => {
                   {v.audioUrl && (
                     <button
                       onClick={() => handlePlayVoice(v)}
-                      className="w-9 h-9 rounded-full bg-rose-500/20 text-rose-300 hover:bg-rose-500/30 flex items-center justify-center transition-colors cursor-pointer"
+                      className="w-9 h-9 rounded-full bg-pink-100 text-pink-700 hover:bg-pink-200 flex items-center justify-center transition-colors cursor-pointer"
                       title={playingVoiceId === v.id ? 'Pause' : 'Play'}
                     >
                       {playingVoiceId === v.id ? (
@@ -174,7 +174,7 @@ export const PrivateInboxTab: React.FC = () => {
                     <a
                       href={v.audioUrl}
                       download="boyfriend-voice-message.webm"
-                      className="text-xs text-neutral-400 hover:text-white underline font-mono"
+                      className="text-xs text-pink-700 hover:text-pink-900 underline font-mono"
                     >
                       Download
                     </a>

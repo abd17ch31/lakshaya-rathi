@@ -1,6 +1,6 @@
-import React, { useState } from 'react';
+import React from 'react';
 import { SiteDataSchema, QuizQuestionItem } from '../../types';
-import { Plus, Trash2, HelpCircle, Check, Sparkles } from 'lucide-react';
+import { Plus, Trash2 } from 'lucide-react';
 import { Button } from '../../components/ui/Button';
 
 interface QuizManagerTabProps {
@@ -45,13 +45,13 @@ export const QuizManagerTab: React.FC<QuizManagerTabProps> = ({ content, onChang
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <div>
-          <h3 className="text-base font-serif text-white">Personalized Trivia Questions</h3>
-          <p className="text-xs text-neutral-400">
+          <h3 className="text-base font-serif text-[#3b0d1e] font-bold">Personalized Trivia Questions</h3>
+          <p className="text-xs text-rose-800/80">
             Create intimate questions that only he would know the answers to.
           </p>
         </div>
         <Button
-          variant="secondary"
+          variant="primary"
           size="sm"
           icon={<Plus className="w-3.5 h-3.5" />}
           onClick={handleAddQuestion}
@@ -64,13 +64,13 @@ export const QuizManagerTab: React.FC<QuizManagerTabProps> = ({ content, onChang
         {questions.map((q, idx) => (
           <div
             key={q.id}
-            className="p-6 rounded-2xl bg-neutral-900/70 border border-white/10 space-y-5 relative"
+            className="p-6 rounded-2xl bg-white border border-pink-200 shadow-sm space-y-5 relative"
           >
-            <div className="flex items-center justify-between border-b border-white/5 pb-3">
-              <span className="text-xs font-mono text-amber-300">Question #{idx + 1}</span>
+            <div className="flex items-center justify-between border-b border-pink-100 pb-3">
+              <span className="text-xs font-mono text-pink-700 font-bold">Question #{idx + 1}</span>
               <button
                 onClick={() => handleDeleteQuestion(idx)}
-                className="text-neutral-500 hover:text-rose-400 transition-colors p-1 cursor-pointer"
+                className="text-rose-400 hover:text-rose-600 transition-colors p-1 cursor-pointer"
                 title="Delete question"
               >
                 <Trash2 className="w-4 h-4" />
@@ -79,20 +79,20 @@ export const QuizManagerTab: React.FC<QuizManagerTabProps> = ({ content, onChang
 
             {/* Question Text */}
             <div className="space-y-1.5">
-              <label className="text-xs font-mono text-neutral-400">Prompt Text</label>
+              <label className="text-xs font-mono text-rose-800 font-semibold">Prompt Text</label>
               <input
                 type="text"
                 value={q.question}
                 onChange={(e) =>
                   handleUpdateQuestion(idx, { ...q, question: e.target.value })
                 }
-                className="w-full px-4 py-2.5 rounded-xl bg-neutral-950 border border-white/10 text-white text-sm outline-none focus:border-amber-400/50"
+                className="w-full px-4 py-2.5 rounded-xl bg-pink-50/50 border border-pink-200 text-[#3b0d1e] text-sm outline-none focus:border-pink-500"
               />
             </div>
 
             {/* Options 4 Grid */}
             <div className="space-y-2">
-              <label className="text-xs font-mono text-neutral-400">Selectable Choices (Choose correct answer)</label>
+              <label className="text-xs font-mono text-rose-800 font-semibold">Selectable Choices (Choose correct answer)</label>
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                 {q.options.map((opt, optIdx) => {
                   const isCorrect = q.correctOptionId === opt.id;
@@ -101,8 +101,8 @@ export const QuizManagerTab: React.FC<QuizManagerTabProps> = ({ content, onChang
                       key={opt.id}
                       className={`flex items-center gap-2 p-2 rounded-xl border transition-all ${
                         isCorrect
-                          ? 'bg-amber-400/10 border-amber-400/50'
-                          : 'bg-neutral-950 border-white/10'
+                          ? 'bg-pink-100 border-pink-400 font-semibold'
+                          : 'bg-pink-50/30 border-pink-200'
                       }`}
                     >
                       <button
@@ -110,10 +110,10 @@ export const QuizManagerTab: React.FC<QuizManagerTabProps> = ({ content, onChang
                         onClick={() =>
                           handleUpdateQuestion(idx, { ...q, correctOptionId: opt.id })
                         }
-                        className={`w-6 h-6 rounded-full flex items-center justify-center text-xs font-mono cursor-pointer shrink-0 ${
+                        className={`w-6 h-6 rounded-full flex items-center justify-center text-xs font-mono cursor-pointer shrink-0 font-bold ${
                           isCorrect
-                            ? 'bg-amber-400 text-neutral-950 font-bold'
-                            : 'bg-neutral-800 text-neutral-400'
+                            ? 'bg-pink-500 text-white'
+                            : 'bg-pink-200 text-rose-800'
                         }`}
                         title="Set as correct answer"
                       >
@@ -127,7 +127,7 @@ export const QuizManagerTab: React.FC<QuizManagerTabProps> = ({ content, onChang
                           nextOpts[optIdx] = { ...opt, text: e.target.value };
                           handleUpdateQuestion(idx, { ...q, options: nextOpts });
                         }}
-                        className="w-full bg-transparent text-xs text-white outline-none"
+                        className="w-full bg-transparent text-xs text-[#3b0d1e] outline-none"
                       />
                     </div>
                   );
@@ -138,26 +138,26 @@ export const QuizManagerTab: React.FC<QuizManagerTabProps> = ({ content, onChang
             {/* Reactions */}
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 pt-2">
               <div className="space-y-1.5">
-                <label className="text-xs font-mono text-emerald-400">Reaction when Correct</label>
+                <label className="text-xs font-mono text-emerald-700 font-bold">Reaction when Correct</label>
                 <input
                   type="text"
                   value={q.reactionCorrect || ''}
                   onChange={(e) =>
                     handleUpdateQuestion(idx, { ...q, reactionCorrect: e.target.value })
                   }
-                  className="w-full px-3 py-2 rounded-xl bg-neutral-950 border border-emerald-500/20 text-white text-xs outline-none focus:border-emerald-400/50"
+                  className="w-full px-3 py-2 rounded-xl bg-emerald-50/60 border border-emerald-300 text-emerald-950 text-xs outline-none focus:border-emerald-500"
                 />
               </div>
 
               <div className="space-y-1.5">
-                <label className="text-xs font-mono text-amber-400">Reaction when Wrong</label>
+                <label className="text-xs font-mono text-rose-700 font-bold">Reaction when Wrong</label>
                 <input
                   type="text"
                   value={q.reactionWrong || ''}
                   onChange={(e) =>
                     handleUpdateQuestion(idx, { ...q, reactionWrong: e.target.value })
                   }
-                  className="w-full px-3 py-2 rounded-xl bg-neutral-950 border border-amber-500/20 text-white text-xs outline-none focus:border-amber-400/50"
+                  className="w-full px-3 py-2 rounded-xl bg-rose-50/60 border border-rose-300 text-rose-950 text-xs outline-none focus:border-rose-500"
                 />
               </div>
             </div>

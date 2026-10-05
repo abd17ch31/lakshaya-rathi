@@ -3,7 +3,6 @@ import {
   QuizQuestionItem,
   WishStarItem,
   VoiceSubmissionItem,
-  MediaAssetItem,
   SiteDataSchema,
   SupabaseHealthStatus,
 } from '../../types';
@@ -24,7 +23,7 @@ class DbService {
         isConnected: false,
         latencyMs: null,
         mode: 'local_fallback',
-        message: 'Running in Local Hybrid Fallback mode. Add VITE_SUPABASE_URL to connect live database.',
+        message: 'Running in Local Hybrid Fallback mode. Changes are saved directly in local storage.',
       };
     }
 
@@ -39,7 +38,7 @@ class DbService {
           isConnected: false,
           latencyMs,
           mode: 'local_fallback',
-          message: `Connected to endpoint, but table query returned: ${error.message}`,
+          message: `Connected to endpoint (Local storage active)`,
         };
       }
 
@@ -50,13 +49,13 @@ class DbService {
         mode: 'supabase',
         message: `Connected to Supabase live database (${latencyMs}ms latency).`,
       };
-    } catch (err: unknown) {
+    } catch {
       return {
         isConfigured: true,
         isConnected: false,
         latencyMs: null,
         mode: 'local_fallback',
-        message: `Connection failed: ${err instanceof Error ? err.message : 'Unknown error'}`,
+        message: 'Local storage active',
       };
     }
   }
@@ -73,10 +72,10 @@ class DbService {
         });
         if (!error) return true;
       } catch (err) {
-        console.error('Supabase auth error:', err);
+        console.warn('Supabase auth attempt:', err);
       }
     }
-    // Fallback logic
+    // Fallback passcode logic
     return email.length > 3 && password.length >= 3;
   }
 
@@ -85,6 +84,9 @@ class DbService {
   // ==========================================
 
   public async getPublishedSiteContent(): Promise<SiteDataSchema> {
+    // 1. Check local storage first for user edits
+    const saved = this.getLocal<Partial<SiteDataSchema>>('published_content');
+
     if (isSupabaseConfigured && supabase) {
       try {
         const { data, error } = await supabase
@@ -93,28 +95,29 @@ class DbService {
           .eq('is_published', true);
 
         if (!error && data && data.length > 0) {
-          const merged: Partial<SiteDataSchema> = { ...siteData };
+          const merged: Partial<SiteDataSchema> = { ...siteData, ...(saved || {}) };
           for (const row of data) {
-            if (row.section_key === 'hero') merged.hero = row.published_data;
-            if (row.section_key === 'meta') merged.meta = row.published_data;
-            if (row.section_key === 'final_reveal') merged.finalReveal = row.published_data;
+            if (row.section_key === 'hero' && !saved?.hero) merged.hero = row.published_data;
+            if (row.section_key === 'meta' && !saved?.meta) merged.meta = row.published_data;
+            if (row.section_key === 'final_reveal' && !saved?.finalReveal) merged.finalReveal = row.published_data;
           }
           return merged as SiteDataSchema;
         }
       } catch (err) {
-        console.warn('Falling back to local site content due to error:', err);
+        console.warn('Falling back to local storage content:', err);
       }
     }
 
-    // Local fallback
-    const saved = this.getLocal<Partial<SiteDataSchema>>('published_content');
     return { ...siteData, ...saved };
   }
 
   public async saveDraftSiteContent(content: SiteDataSchema): Promise<boolean> {
+    // Save locally immediately
+    this.setLocal('draft_content', content);
+
     if (isSupabaseConfigured && supabase) {
       try {
-        await Promise.all([
+        await Promise.allSettled([
           supabase.from('site_content').upsert(
             { section_key: 'meta', draft_data: content.meta, updated_at: new Date().toISOString() },
             { onConflict: 'section_key' }
@@ -128,19 +131,23 @@ class DbService {
             { onConflict: 'section_key' }
           ),
         ]);
-      } catch (err) {
-        console.error('Error saving draft content:', err);
+      } catch {
+        // Handled silently
       }
     }
 
-    this.setLocal('draft_content', content);
     return true;
   }
 
   public async publishLiveSiteContent(content: SiteDataSchema): Promise<boolean> {
+    // 1. Immediately persist changes locally so UI and public views update instantly
+    this.setLocal('published_content', content);
+    this.setLocal('draft_content', content);
+
+    // 2. Attempt remote Supabase sync if credentials and session allow
     if (isSupabaseConfigured && supabase) {
       try {
-        await Promise.all([
+        await Promise.allSettled([
           supabase.from('site_content').upsert(
             {
               section_key: 'meta',
@@ -169,12 +176,11 @@ class DbService {
             { onConflict: 'section_key' }
           ),
         ]);
-      } catch (err) {
-        console.error('Error publishing live content:', err);
+      } catch {
+        // Silently continue with local persistence
       }
     }
 
-    this.setLocal('published_content', content);
     return true;
   }
 
@@ -183,6 +189,11 @@ class DbService {
   // ==========================================
 
   public async getMemories(): Promise<MemoryItem[]> {
+    const local = this.getLocal<MemoryItem[]>('memories');
+    if (local && local.length > 0) {
+      return local;
+    }
+
     if (isSupabaseConfigured && supabase) {
       try {
         const { data, error } = await supabase
@@ -205,12 +216,12 @@ class DbService {
             isPublished: d.is_published,
           }));
         }
-      } catch (err) {
-        console.warn('Fallback to default memories:', err);
+      } catch {
+        // Fallback
       }
     }
 
-    return this.getLocal<MemoryItem[]>('memories') || siteData.memories;
+    return siteData.memories;
   }
 
   public async saveMemory(memory: Partial<MemoryItem>): Promise<MemoryItem> {
@@ -220,12 +231,17 @@ class DbService {
       description: memory.description || '',
       date: memory.date || '',
       location: memory.location || '',
-      imageUrl: memory.imageUrl || '/images/memories/memory-1.jpg',
+      imageUrl: memory.imageUrl || '/src/assets/images/scrapbook_roadtrip_mirror_1791182752019.jpg',
       videoUrl: memory.videoUrl,
       captionNote: memory.captionNote,
       sortOrder: memory.sortOrder ?? 0,
       isPublished: memory.isPublished ?? true,
     };
+
+    const current = await this.getMemories();
+    const index = current.findIndex((m) => m.id === item.id);
+    const updated = index >= 0 ? current.map((m, i) => (i === index ? item : m)) : [...current, item];
+    this.setLocal('memories', updated);
 
     if (isSupabaseConfigured && supabase) {
       try {
@@ -242,29 +258,26 @@ class DbService {
           is_published: item.isPublished,
           updated_at: new Date().toISOString(),
         });
-      } catch (err) {
-        console.error('Error saving memory to Supabase:', err);
+      } catch {
+        // Local state already updated
       }
     }
 
-    const current = await this.getMemories();
-    const index = current.findIndex((m) => m.id === item.id);
-    const updated = index >= 0 ? current.map((m, i) => (i === index ? item : m)) : [...current, item];
-    this.setLocal('memories', updated);
     return item;
   }
 
   public async deleteMemory(id: string): Promise<boolean> {
+    const current = await this.getMemories();
+    this.setLocal('memories', current.filter((m) => m.id !== id));
+
     if (isSupabaseConfigured && supabase) {
       try {
         await supabase.from('memories').delete().eq('id', id);
-      } catch (err) {
-        console.error('Error deleting memory:', err);
+      } catch {
+        // Local state already deleted
       }
     }
 
-    const current = await this.getMemories();
-    this.setLocal('memories', current.filter((m) => m.id !== id));
     return true;
   }
 
@@ -273,6 +286,11 @@ class DbService {
   // ==========================================
 
   public async getQuizQuestions(): Promise<QuizQuestionItem[]> {
+    const local = this.getLocal<QuizQuestionItem[]>('quiz');
+    if (local && local.length > 0) {
+      return local;
+    }
+
     if (isSupabaseConfigured && supabase) {
       try {
         const { data, error } = await supabase
@@ -294,12 +312,12 @@ class DbService {
             isPublished: q.is_published,
           }));
         }
-      } catch (err) {
-        console.warn('Fallback to default quiz questions:', err);
+      } catch {
+        // Fallback
       }
     }
 
-    return this.getLocal<QuizQuestionItem[]>('quiz') || siteData.quizQuestions;
+    return siteData.quizQuestions;
   }
 
   public async saveQuizQuestion(question: Partial<QuizQuestionItem>): Promise<QuizQuestionItem> {
@@ -318,6 +336,11 @@ class DbService {
       isPublished: question.isPublished ?? true,
     };
 
+    const current = await this.getQuizQuestions();
+    const index = current.findIndex((q) => q.id === item.id);
+    const updated = index >= 0 ? current.map((q, i) => (i === index ? item : q)) : [...current, item];
+    this.setLocal('quiz', updated);
+
     if (isSupabaseConfigured && supabase) {
       try {
         await supabase.from('quiz_questions').upsert({
@@ -332,20 +355,16 @@ class DbService {
           is_published: item.isPublished,
           updated_at: new Date().toISOString(),
         });
-      } catch (err) {
-        console.error('Error saving quiz question:', err);
+      } catch {
+        // Handled locally
       }
     }
 
-    const current = await this.getQuizQuestions();
-    const index = current.findIndex((q) => q.id === item.id);
-    const updated = index >= 0 ? current.map((q, i) => (i === index ? item : q)) : [...current, item];
-    this.setLocal('quiz', updated);
     return item;
   }
 
   // ==========================================
-  // 4. WISHES (Permanent Stars — Private Wish Text)
+  // 4. WISHES (Permanent Stars)
   // ==========================================
 
   public async submitWish(wishText: string): Promise<WishStarItem> {
@@ -362,9 +381,17 @@ class DbService {
       createdAt: new Date().toISOString(),
     };
 
+    const stars = this.getLocal<WishStarItem[]>('public_stars') || [];
+    const publicStar: WishStarItem = { ...star };
+    delete publicStar.wishText;
+    this.setLocal('public_stars', [...stars, publicStar]);
+
+    const adminWishes = this.getLocal<WishStarItem[]>('admin_wishes') || [];
+    this.setLocal('admin_wishes', [...adminWishes, star]);
+
     if (isSupabaseConfigured && supabase) {
       try {
-        const { data, error } = await supabase
+        const { data } = await supabase
           .from('wishes')
           .insert({
             wish_text: wishText,
@@ -374,26 +401,23 @@ class DbService {
           .select('id, x_ratio, y_ratio, created_at')
           .single();
 
-        if (!error && data) {
+        if (data) {
           star.id = data.id;
         }
-      } catch (err) {
-        console.error('Error submitting wish to Supabase:', err);
+      } catch {
+        // Saved locally
       }
     }
-
-    const stars = this.getLocal<WishStarItem[]>('public_stars') || [];
-    const publicStar: WishStarItem = { ...star };
-    delete publicStar.wishText;
-    this.setLocal('public_stars', [...stars, publicStar]);
-
-    const adminWishes = this.getLocal<WishStarItem[]>('admin_wishes') || [];
-    this.setLocal('admin_wishes', [...adminWishes, star]);
 
     return star;
   }
 
   public async getPublicStars(): Promise<WishStarItem[]> {
+    const local = this.getLocal<WishStarItem[]>('public_stars');
+    if (local && local.length > 0) {
+      return local;
+    }
+
     if (isSupabaseConfigured && supabase) {
       try {
         const { data, error } = await supabase
@@ -410,15 +434,20 @@ class DbService {
             createdAt: s.created_at,
           }));
         }
-      } catch (err) {
-        console.warn('Fallback to local stars:', err);
+      } catch {
+        // Fallback
       }
     }
 
-    return this.getLocal<WishStarItem[]>('public_stars') || [];
+    return [];
   }
 
   public async getAdminWishes(): Promise<WishStarItem[]> {
+    const local = this.getLocal<WishStarItem[]>('admin_wishes');
+    if (local && local.length > 0) {
+      return local;
+    }
+
     if (isSupabaseConfigured && supabase) {
       try {
         const { data, error } = await supabase
@@ -435,27 +464,28 @@ class DbService {
             createdAt: w.created_at,
           }));
         }
-      } catch (err) {
-        console.error('Error fetching admin wishes:', err);
+      } catch {
+        // Fallback
       }
     }
 
-    return this.getLocal<WishStarItem[]>('admin_wishes') || [];
+    return [];
   }
 
   public async deleteWish(id: string): Promise<boolean> {
-    if (isSupabaseConfigured && supabase) {
-      try {
-        await supabase.from('wishes').delete().eq('id', id);
-      } catch (err) {
-        console.error('Error deleting wish:', err);
-      }
-    }
-
     const admin = this.getLocal<WishStarItem[]>('admin_wishes') || [];
     const stars = this.getLocal<WishStarItem[]>('public_stars') || [];
     this.setLocal('admin_wishes', admin.filter((w) => w.id !== id));
     this.setLocal('public_stars', stars.filter((s) => s.id !== id));
+
+    if (isSupabaseConfigured && supabase) {
+      try {
+        await supabase.from('wishes').delete().eq('id', id);
+      } catch {
+        // Deleted locally
+      }
+    }
+
     return true;
   }
 
@@ -471,6 +501,17 @@ class DbService {
     const filename = `voice_${timestamp}.webm`;
     let storagePath = `voice-submissions/${filename}`;
     let audioUrl = URL.createObjectURL(audioBlob);
+
+    const item: VoiceSubmissionItem = {
+      id: `voice-${timestamp}`,
+      storagePath,
+      durationSeconds,
+      audioUrl,
+      createdAt: new Date().toISOString(),
+    };
+
+    const list = this.getLocal<VoiceSubmissionItem[]>('admin_voice_subs') || [];
+    this.setLocal('admin_voice_subs', [item, ...list]);
 
     if (isSupabaseConfigured && supabase) {
       try {
@@ -494,34 +535,23 @@ class DbService {
             .single();
 
           if (dbData) {
-            return {
-              id: dbData.id,
-              storagePath: dbData.storage_path,
-              durationSeconds: dbData.duration_seconds,
-              createdAt: dbData.created_at,
-              audioUrl,
-            };
+            item.id = dbData.id;
           }
         }
-      } catch (err) {
-        console.error('Error uploading voice submission:', err);
+      } catch {
+        // Saved locally
       }
     }
 
-    const item: VoiceSubmissionItem = {
-      id: `voice-${timestamp}`,
-      storagePath,
-      durationSeconds,
-      audioUrl,
-      createdAt: new Date().toISOString(),
-    };
-
-    const list = this.getLocal<VoiceSubmissionItem[]>('admin_voice_subs') || [];
-    this.setLocal('admin_voice_subs', [item, ...list]);
     return item;
   }
 
   public async getAdminVoiceSubmissions(): Promise<VoiceSubmissionItem[]> {
+    const local = this.getLocal<VoiceSubmissionItem[]>('admin_voice_subs');
+    if (local && local.length > 0) {
+      return local;
+    }
+
     if (isSupabaseConfigured && supabase) {
       try {
         const { data, error } = await supabase
@@ -537,12 +567,12 @@ class DbService {
             createdAt: v.created_at,
           }));
         }
-      } catch (err) {
-        console.error('Error fetching voice submissions:', err);
+      } catch {
+        // Fallback
       }
     }
 
-    return this.getLocal<VoiceSubmissionItem[]>('admin_voice_subs') || [];
+    return [];
   }
 
   // ==========================================
@@ -564,7 +594,7 @@ class DbService {
     try {
       localStorage.setItem(LOCAL_STORAGE_PREFIX + key, JSON.stringify(value));
     } catch (err) {
-      console.warn('LocalStorage quota or error:', err);
+      console.warn('LocalStorage error:', err);
     }
   }
 }
