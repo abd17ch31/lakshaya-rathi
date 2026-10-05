@@ -16,16 +16,22 @@ import { AudioToggle } from './components/audio/AudioToggle';
 import { Container } from './components/ui/Container';
 import { Lock } from 'lucide-react';
 import { StoryContentProvider, useStoryContent } from './context/StoryContentContext';
+import { authService } from './services/supabase/authService';
 
 function StoryExperience() {
   const [hasEnteredExperience, setHasEnteredExperience] = useState(false);
   const [isQuizUnlocked, setIsQuizUnlocked] = useState(false);
   const [isAdminView, setIsAdminView] = useState(false);
-  const [isAdminAuthenticated, setIsAdminAuthenticated] = useState(false);
+  const [isAdminAuthenticated, setIsAdminAuthenticated] = useState(authService.isAuthenticated());
   const { content } = useStoryContent();
 
   useEffect(() => {
-    // Check initial route / hash for admin
+    // 1. Subscribe to real Supabase auth session changes
+    const unsubscribe = authService.subscribe((isAuth) => {
+      setIsAdminAuthenticated(isAuth);
+    });
+
+    // 2. Check initial route / hash for admin
     if (window.location.hash === '#admin' || window.location.pathname.startsWith('/admin')) {
       setIsAdminView(true);
     }
@@ -39,7 +45,10 @@ function StoryExperience() {
     };
 
     window.addEventListener('hashchange', handleHashChange);
-    return () => window.removeEventListener('hashchange', handleHashChange);
+    return () => {
+      unsubscribe();
+      window.removeEventListener('hashchange', handleHashChange);
+    };
   }, []);
 
   const handleEnter = () => {

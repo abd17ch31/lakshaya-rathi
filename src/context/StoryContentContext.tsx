@@ -21,8 +21,8 @@ export const StoryContentProvider: React.FC<{ children: ReactNode }> = ({ childr
     try {
       const live = await dbService.getPublishedSiteContent();
       setContent(live);
-    } catch {
-      // Fallback
+    } catch (err) {
+      console.warn('Could not refresh live content:', err);
     }
   };
 
@@ -31,23 +31,15 @@ export const StoryContentProvider: React.FC<{ children: ReactNode }> = ({ childr
   }, []);
 
   const publishContent = async (updated: SiteDataSchema): Promise<boolean> => {
-    try {
-      const success = await dbService.publishLiveSiteContent(updated);
-      if (success) {
-        setContent(updated);
-      }
-      return success;
-    } catch {
-      return false;
+    const success = await dbService.publishLiveSiteContent(updated);
+    if (success) {
+      setContent(updated);
     }
+    return success;
   };
 
   const saveDraft = async (updated: SiteDataSchema): Promise<boolean> => {
-    try {
-      return await dbService.saveDraftSiteContent(updated);
-    } catch {
-      return false;
-    }
+    return await dbService.saveDraftSiteContent(updated);
   };
 
   // Helper to dynamically replace placeholders in any string

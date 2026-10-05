@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { motion } from 'motion/react';
 import { Lock, Sparkles, Key, AlertCircle, ArrowLeft } from 'lucide-react';
 import { Button } from '../components/ui/Button';
-import { dbService } from '../services/supabase/dbService';
+import { authService } from '../services/supabase/authService';
 
 interface AdminAuthProps {
   onAuthenticated: () => void;
@@ -10,45 +10,33 @@ interface AdminAuthProps {
 }
 
 export const AdminAuth: React.FC<AdminAuthProps> = ({ onAuthenticated, onExit }) => {
-  const [email, setEmail] = useState('girlfriend@birthday.story');
   const [password, setPassword] = useState('');
-  const [passcode, setPasscode] = useState('');
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(false);
-  const [usePasscodeMode, setUsePasscodeMode] = useState(true);
 
-  const handlePasscodeSubmit = async (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setErrorMsg(null);
-    setIsLoading(true);
 
-    if (passcode.trim() === 'birthday2026' || passcode.trim() === 'love' || passcode.trim() === 'admin') {
-      setTimeout(() => {
-        setIsLoading(false);
-        onAuthenticated();
-      }, 400);
-    } else {
-      setIsLoading(false);
-      setErrorMsg('Incorrect passcode. Try "birthday2026" or "love"');
+    if (!password.trim()) {
+      setErrorMsg('Please enter your admin password.');
+      return;
     }
-  };
 
-  const handleEmailSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setErrorMsg(null);
     setIsLoading(true);
 
     try {
-      const success = await dbService.signInWithEmail(email, password);
+      const result = await authService.login(password);
       setIsLoading(false);
-      if (success) {
+
+      if (result.success) {
         onAuthenticated();
       } else {
-        setErrorMsg('Invalid email credentials. You can also use Quick Passcode login.');
+        setErrorMsg(result.message);
       }
     } catch {
       setIsLoading(false);
-      setErrorMsg('Authentication error. Try using Quick Passcode.');
+      setErrorMsg('An unexpected error occurred during authentication.');
     }
   };
 
@@ -68,106 +56,44 @@ export const AdminAuth: React.FC<AdminAuthProps> = ({ onAuthenticated, onExit })
           </div>
           <h2 className="text-2xl font-serif text-[#3b0d1e] font-bold">Story Control Room</h2>
           <p className="text-xs text-rose-800/80">
-            Private customization & response vault for the creator.
+            Enter your admin password to manage story details and view private responses.
           </p>
         </div>
 
-        {usePasscodeMode ? (
-          <form onSubmit={handlePasscodeSubmit} className="space-y-4">
-            <div className="space-y-1.5">
-              <label className="text-xs font-mono text-rose-800 font-semibold">Secret Story Passcode</label>
-              <div className="relative">
-                <input
-                  type="password"
-                  value={passcode}
-                  onChange={(e) => setPasscode(e.target.value)}
-                  placeholder="Enter secret passcode..."
-                  className="w-full px-4 py-3 rounded-xl bg-pink-50/50 border border-pink-200 text-[#3b0d1e] text-sm outline-none focus:border-pink-500 transition-colors"
-                />
-                <Key className="w-4 h-4 text-pink-400 absolute right-3.5 top-3.5" />
-              </div>
-            </div>
-
-            {errorMsg && (
-              <div className="flex items-center gap-2 text-xs text-rose-700 bg-rose-50 p-2.5 rounded-lg border border-rose-200 font-medium">
-                <AlertCircle className="w-4 h-4 shrink-0 text-rose-500" />
-                <span>{errorMsg}</span>
-              </div>
-            )}
-
-            <Button
-              type="submit"
-              variant="primary"
-              size="md"
-              className="w-full"
-              isLoading={isLoading}
-              icon={<Sparkles className="w-4 h-4 text-white" />}
-            >
-              Unlock Control Room
-            </Button>
-
-            <div className="flex items-center justify-between text-xs text-pink-700 pt-2 font-mono">
-              <button
-                type="button"
-                onClick={() => setUsePasscodeMode(false)}
-                className="hover:text-pink-900 underline cursor-pointer"
-              >
-                Use Email Sign-in
-              </button>
-              <span>Hint: birthday2026</span>
-            </div>
-          </form>
-        ) : (
-          <form onSubmit={handleEmailSubmit} className="space-y-4">
-            <div className="space-y-1.5">
-              <label className="text-xs font-mono text-rose-800 font-semibold">Admin Email</label>
-              <input
-                type="email"
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                className="w-full px-4 py-3 rounded-xl bg-pink-50/50 border border-pink-200 text-[#3b0d1e] text-sm outline-none focus:border-pink-500 transition-colors"
-              />
-            </div>
-
-            <div className="space-y-1.5">
-              <label className="text-xs font-mono text-rose-800 font-semibold">Password</label>
+        <form onSubmit={handleSubmit} className="space-y-4">
+          <div className="space-y-1.5">
+            <label className="text-xs font-mono text-rose-800 font-semibold">Password</label>
+            <div className="relative">
               <input
                 type="password"
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
-                placeholder="••••••••"
+                placeholder="••••••••••••"
+                autoFocus
                 className="w-full px-4 py-3 rounded-xl bg-pink-50/50 border border-pink-200 text-[#3b0d1e] text-sm outline-none focus:border-pink-500 transition-colors"
               />
+              <Key className="w-4 h-4 text-pink-400 absolute right-3.5 top-3.5" />
             </div>
+          </div>
 
-            {errorMsg && (
-              <div className="flex items-center gap-2 text-xs text-rose-700 bg-rose-50 p-2.5 rounded-lg border border-rose-200 font-medium">
-                <AlertCircle className="w-4 h-4 shrink-0 text-rose-500" />
-                <span>{errorMsg}</span>
-              </div>
-            )}
-
-            <Button
-              type="submit"
-              variant="primary"
-              size="md"
-              className="w-full"
-              isLoading={isLoading}
-            >
-              Sign In to Supabase
-            </Button>
-
-            <div className="text-center text-xs text-pink-700 pt-2 font-mono">
-              <button
-                type="button"
-                onClick={() => setUsePasscodeMode(true)}
-                className="hover:text-pink-900 underline cursor-pointer"
-              >
-                Switch back to Secret Passcode
-              </button>
+          {errorMsg && (
+            <div className="flex items-start gap-2 text-xs text-rose-700 bg-rose-50 p-3 rounded-xl border border-rose-200 font-medium">
+              <AlertCircle className="w-4 h-4 shrink-0 text-rose-500 mt-0.5" />
+              <span className="leading-snug">{errorMsg}</span>
             </div>
-          </form>
-        )}
+          )}
+
+          <Button
+            type="submit"
+            variant="primary"
+            size="md"
+            className="w-full"
+            isLoading={isLoading}
+            icon={<Sparkles className="w-4 h-4 text-white" />}
+          >
+            Log In to Control Room
+          </Button>
+        </form>
 
         <div className="pt-4 border-t border-pink-100 text-center">
           <button

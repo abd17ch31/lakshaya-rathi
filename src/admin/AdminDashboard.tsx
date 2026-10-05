@@ -11,10 +11,12 @@ import {
   Heart,
   CheckCircle2,
   AlertCircle,
+  LogOut,
 } from 'lucide-react';
 import { Button } from '../components/ui/Button';
 import { SiteDataSchema } from '../types';
 import { useStoryContent } from '../context/StoryContentContext';
+import { authService } from '../services/supabase/authService';
 import { StoryInfoTab } from './tabs/StoryInfoTab';
 import { QuizManagerTab } from './tabs/QuizManagerTab';
 import { MemoryManagerTab } from './tabs/MemoryManagerTab';
@@ -47,7 +49,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
     setToastMessage({ text, type });
     setTimeout(() => {
       setToastMessage(null);
-    }, 4000);
+    }, 5000);
   };
 
   const handleSaveDraft = async () => {
@@ -60,9 +62,9 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
       } else {
         showToast('Failed to save draft.', 'error');
       }
-    } catch {
+    } catch (err) {
       setIsSaving(false);
-      showToast('Failed to save draft.', 'error');
+      showToast(err instanceof Error ? err.message : 'Failed to save draft.', 'error');
     }
   };
 
@@ -73,14 +75,19 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
       setIsPublishing(false);
       if (success) {
         if (onContentUpdated) onContentUpdated(content);
-        showToast('Published live! Boyfriend name and all edits are now active.');
+        showToast('Published live to Supabase! All edits are now active for visitors.');
       } else {
         showToast('Failed to publish changes.', 'error');
       }
-    } catch {
+    } catch (err) {
       setIsPublishing(false);
-      showToast('Failed to publish changes.', 'error');
+      showToast(err instanceof Error ? err.message : 'Publish error. Check session.', 'error');
     }
+  };
+
+  const handleLogout = async () => {
+    await authService.logout();
+    onExitAdmin();
   };
 
   const tabs: { id: TabType; label: string; icon: React.ReactNode }[] = [
@@ -140,6 +147,14 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
           >
             Publish Live
           </Button>
+
+          <button
+            onClick={handleLogout}
+            className="p-2 rounded-xl text-rose-400 hover:text-rose-700 hover:bg-rose-50 transition-colors cursor-pointer border border-transparent hover:border-pink-200"
+            title="Log Out of Supabase Admin"
+          >
+            <LogOut className="w-4 h-4" />
+          </button>
         </div>
       </header>
 
@@ -166,7 +181,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
           })}
         </div>
 
-        {/* Tab Content Panels (Cards inside white container) */}
+        {/* Tab Content Panels */}
         <div className="pt-2">
           {activeTab === 'story' && (
             <StoryInfoTab content={content} onChange={setContent} />
